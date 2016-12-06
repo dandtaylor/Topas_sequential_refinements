@@ -20,30 +20,27 @@ filelist = ddt.makeFileList(filepre,filemid,filenums)
 ########## import refinement results and metadata ##########
 
 vol = ddt.importResults('volume')
+volError = ddt.importResultsError('volume')
 time = ddt.importMetadata(filelist,'time')
 temp = ddt.importMetadata(filelist,'temp')
 atm = ddt.importMetadata(filelist,'atm')
 
 ########## plot and save refined unit cell volume ##########
-startingScan = 0
+startingScanIndex = 0
 time = np.array(time)
-time = time-time[startingScan]
+time = time-time[startingScanIndex]
 
 
 fig1, ax1 = plt.subplots(1)
-ddt.plotVolATM(time,vol,atm,'volume ($\AA^3$)','Unit Cell Volume','La085Sr015FeO3_volume')
-plt.xlim(0,1000)
-plt.ylim(vol[startingScan]-vol[startingScan]*0.0007,max(vol) + max(vol) * 0.0007)
-
 fig1.set_size_inches(6, 4)
-
+ddt.plotVolATM(time,vol,volError,atm,startingScanIndex,
+'volume ($\AA^3$)','Unit Cell Volume, x=15%','La085Sr015FeO3_volume')
 
 ########## noramlize, plot, and save unit cell volume ##########
 
-normVol = vol / vol[startingScan]
+normVol = vol / vol[startingScanIndex] * 100
+normVolError = volError / vol[startingScanIndex] * 100
 fig2, ax2 = plt.subplots(1)
-ddt.plotVolATM(time,normVol,atm,'normalized volume (%)','Normalized Volume','La085Sr015FeO3_NormVolume')
-plt.xlim(0,1000)
-plt.ylim(0.999,max(normVol)+0.0007)
-
 fig2.set_size_inches(6, 4)
+ddt.plotVolATM(time,normVol,normVolError,atm,startingScanIndex,
+'normalized volume (%)','Normalized Volume, x=15%','La085Sr015FeO3_NormVolume')

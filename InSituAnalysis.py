@@ -136,6 +136,22 @@ def importResults(prmResult):
     prmData = np.array(prmData).astype(float)
     return prmData
 
+def importResultsError(prmResult):
+    """
+    import and return the topas sequential refinement results of the given prm's error
+    from the results.txt file
+    error is assumed to be in the column directly to the right of the prm
+    returns numpy array with floats
+    """
+    with open('results.txt') as f:
+        data = f.readlines()
+    
+    prmIndex = data[0].split('\t').index(str(prmResult))
+    prmData = []
+    for ii in range(1,len(data)):
+        prmData.append(data[ii].split()[prmIndex+1])
+    prmData = np.array(prmData).astype(float)
+    return prmData
 
 
 def importMetadata(filelist,prm):
@@ -246,7 +262,12 @@ def makeFileList(filepre,filemid,filenums):
 
 
 
-def plotVolATM(Xprm,Yprm,atm,YLabel,PlotLabel,savedFileName):
+def plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName):
+    """
+    This function will plot 2 prms (vol vs. time) against each other while using
+    the atm data to determine the color and shape of the data point
+    This makes it clear what atmosphere each pattern was collected under
+    """
     for ii in range(len(Yprm)):
         if atm[ii] == 'GO5':
             "air"
@@ -260,12 +281,20 @@ def plotVolATM(Xprm,Yprm,atm,YLabel,PlotLabel,savedFileName):
             edgecolors='face',linewidths=1)
         else:
             print('this index does not match')
+    ### plot errorbars ###
+    plt.errorbar(Xprm,Yprm,yerr=Yerror, errorevery=1, fmt='none')
     
+    ### plot formatting and appearance stuff ###
     plt.show()
     ax = plt.gca()
     ax.get_yaxis().get_major_formatter().set_useOffset(False)
     plt.xlabel('time (sec)')
+    plt.xlim(0,1000)
     plt.ylabel(YLabel)
+    ymin = Yprm[startingScan]-Yprm[startingScan]*0.0007 # 0.7% below the minimum value
+    ymax = max(Yprm) + max(Yprm) * 0.0007 # 0.7% above the max value
+    plt.ylim(ymin,ymax)
+    
     plt.title(PlotLabel)
     matplotlib.rcParams['pdf.fonttype']=42
     matplotlib.rcParams.update({'font.size': 9})
