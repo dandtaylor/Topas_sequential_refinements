@@ -116,7 +116,7 @@ def plotAllPrms(filename,pltTitle):
     matplotlib.rcParams.update({'font.size': 9})
     #plt.tight_layout()
     plt.suptitle(pltTitle, fontsize=12, y=1)
-    savedFileName = "RefinementResults"
+    savedFileName = "RefinementResults_" + filename.split('.')[0]
     plt.savefig(savedFileName + ".png", format = 'png', dpi= 600)
     plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
 
@@ -186,17 +186,24 @@ def importMetadata(filelist,prm):
     return templist
     
 
-def createBatchFile(filelist,batchFileName):
+def createBatchFile(filelist,batchFileName,**optionals):
     """
     create a windows batch file for topas sequential refinements
     create the filelist using 'makeFileList(filepre,filemid,filenums)'
     
     Be sure to include updateDataFile.py in the same folder as the patterns
+    use 'fileTag' keyword to define an additiona string to be included in the 
+    .inp files created during the refinement
     
     """
     topasLocation = 'C:\\TOPAS4-2\\'
     folderLocation = os.getcwd()
     
+    ########## optional arguments ##########
+    if 'fileTag' in optionals:
+        fileTag = optionals['fileTag']
+    else:
+        fileTag = ''
                
     ##### be sure to 'escape' any backslash '\' characters with an additional '\'
 
@@ -226,8 +233,8 @@ def createBatchFile(filelist,batchFileName):
                 line2 = 'TC ' + '\"' + folderLocation +'\\Temp.inp\" ' + '\"macro filename {' + filelist[ii] + '.xye} #define GUI_LINES #define header\"\n'
             else:
                 line2 = 'TC ' + '\"' + folderLocation +'\\Temp.inp\" ' + '\"macro filename {' + filelist[ii] + '.xye} #define GUI_LINES\"\n' 
-            line5 = 'copy Temp.out ' + filelist[ii] + '.inp\n'
-            line7 = 'python updateDataFile.py ' + filelist[ii] + '\n'
+            line5 = 'copy Temp.out ' + filelist[ii] + fileTag + '.inp\n'
+            line7 = 'python updateDataFile.py ' + filelist[ii] + ' ' + fileTag + '\n'
             refinementBlock = [commentLine,line1,line2,line3,line4,line5,line6,line7]
             if ii==0:
                 refinementBlock.append('timeout /t 60\n')
