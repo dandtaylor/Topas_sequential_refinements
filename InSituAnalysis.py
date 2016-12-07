@@ -121,12 +121,12 @@ def plotAllPrms(filename,pltTitle):
     plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
 
    
-def importResults(prmResult):
+def importResults(filename,prmResult):
     """
     import and return the topas sequential refinement results from the results.txt file
     returns numpy array with floats
     """
-    with open('results.txt') as f:
+    with open(filename) as f:
         data = f.readlines()
     
     prmIndex = data[0].split('\t').index(str(prmResult))
@@ -136,14 +136,14 @@ def importResults(prmResult):
     prmData = np.array(prmData).astype(float)
     return prmData
 
-def importResultsError(prmResult):
+def importResultsError(filename,prmResult):
     """
     import and return the topas sequential refinement results of the given prm's error
     from the results.txt file
     error is assumed to be in the column directly to the right of the prm
     returns numpy array with floats
     """
-    with open('results.txt') as f:
+    with open(filename) as f:
         data = f.readlines()
     
     prmIndex = data[0].split('\t').index(str(prmResult))
