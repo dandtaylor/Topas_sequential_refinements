@@ -15,6 +15,7 @@ import os
 
 def Plotprm(prmResult, normalization):
     """
+    Plotprm(prmResult, normalization)\n
     plot topas sequential refinement results directly from results.txt
     """
     with open('results.txt') as f:
@@ -32,6 +33,7 @@ def Plotprm(prmResult, normalization):
 
 def plotAllPrms(filename,pltTitle):
     """
+    plotAllPrms(filename,pltTitle)\n
     This function will go into the results.txt file in the current folder and 
     plot all refined parameters\n 
     I need to add code to delete unused axes
@@ -123,6 +125,7 @@ def plotAllPrms(filename,pltTitle):
    
 def importResults(filename,prmResult):
     """
+    importResults(filename,prmResult)\n
     import and return the topas sequential refinement results from the results.txt file
     returns numpy array with floats
     """
@@ -138,6 +141,7 @@ def importResults(filename,prmResult):
 
 def importResultsError(filename,prmResult):
     """
+    importResultsError(filename,prmResult)\n
     import and return the topas sequential refinement results of the given prm's error
     from the results.txt file
     error is assumed to be in the column directly to the right of the prm
@@ -156,6 +160,7 @@ def importResultsError(filename,prmResult):
 
 def importMetadata(filelist,prm):
     """
+    importMetadata(filelist,prm)\n
     import and return the specified values (prm) from the metadata
     create the filelist using 'makeFileList(filepre,filemid,filenums)'
        
@@ -188,12 +193,14 @@ def importMetadata(filelist,prm):
 
 def createBatchFile(filelist,batchFileName,**optionals):
     """
+    createBatchFile(filelist,batchFileName,**optionals)\n
     create a windows batch file for topas sequential refinements
     create the filelist using 'makeFileList(filepre,filemid,filenums)'
     
     Be sure to include updateDataFile.py in the same folder as the patterns
     use 'fileTag' keyword to define an additiona string to be included in the 
     .inp files created during the refinement
+    use 'nextBatch' keyword to launch another file after the this one finishes
     
     """
     topasLocation = 'C:\\TOPAS4-2\\'
@@ -240,10 +247,16 @@ def createBatchFile(filelist,batchFileName,**optionals):
                 refinementBlock.append('timeout /t 60\n')
             for ii in range(len(refinementBlock)):
                 batchFile.write(refinementBlock[ii])
+        if 'nextBatch' in optionals:
+            batchFile.write('timeout /t 60\n')
+            batchFile.write(optionals['nextBatch'])
+        else:
+            batchFile.write('timeout /t 180\n')
 
 
 def makeFileList(filepre,filemid,filenums):
     """
+    makeFileList(filepre,filemid,filenums)\n
     generate a list of all the files to be analyzed (excluding any file extension)
     
     ##### example filelist building parameters ########
@@ -271,7 +284,8 @@ def makeFileList(filepre,filemid,filenums):
 
 def plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName):
     """
-    This function will plot 2 prms (vol vs. time) against each other while using
+    plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName)\n
+    This function will plot 2 prms (vol and time) against each other while using
     the atm data to determine the color and shape of the data point
     This makes it clear what atmosphere each pattern was collected under
     """
