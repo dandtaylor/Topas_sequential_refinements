@@ -194,7 +194,7 @@ def importMetadata(filelist,prm):
 def createBatchFile(filelist,batchFileName,**optionals):
     """
     createBatchFile(filelist,batchFileName,**optionals)\n
-    create a windows batch file for topas sequential refinements
+    create a windows batch file for topas 5 sequential refinements
     create the filelist using 'makeFileList(filepre,filemid,filenums)'
     
     Be sure to include updateDataFile.py in the same folder as the patterns
@@ -203,7 +203,7 @@ def createBatchFile(filelist,batchFileName,**optionals):
     use 'nextBatch' keyword to launch another file after the this one finishes
     
     """
-    topasLocation = 'C:\\TOPAS4-2\\'
+    topasLocation = 'C:\\TOPAS5\\'
     folderLocation = os.getcwd()
     
     ########## optional arguments ##########
@@ -220,8 +220,10 @@ def createBatchFile(filelist,batchFileName,**optionals):
         ############## header lines #######################
         commentLine = 'REM ---------------\n'
         del1 = 'del ' + '\"' + folderLocation +'\\Temp.inp\"\n'
-        del2 = 'del ' + '\"' + folderLocation +'\\results.txt\"\n'
-        copy1 = 'copy ' + '\"' + folderLocation + '\\starting.inp\" ' + '\"' +folderLocation + '\\Temp.inp\"\n'
+        del2 = ('del ' + '\"' + folderLocation +'\\results' + fileTag +
+            '.txt\"\n') 
+        copy1 = ('copy ' + '\"' + folderLocation + '\\starting' + fileTag +
+            '.inp\" ' + '\"' +folderLocation + '\\Temp.inp\"\n') ### update starting.inp
         headerList = [commentLine,del1,del2,copy1,commentLine]
         for ii in range(len(headerList)):
             batchFile.write(headerList[ii])
@@ -237,14 +239,17 @@ def createBatchFile(filelist,batchFileName,**optionals):
         ### lines 2, 5, and 7 need to be iterated ###
         for ii in range(len(filelist)):
             if ii == 0:
-                line2 = 'TC ' + '\"' + folderLocation +'\\Temp.inp\" ' + '\"macro filename {' + filelist[ii] + '.xye} #define GUI_LINES #define header\"\n'
+                line2 = ('TC ' + '\"' + folderLocation +'\\Temp.inp\" ' +
+                    '\"macro filename {' + filelist[ii] +
+                    '} #define GUI_LINES #define header\"\n')
             else:
-                line2 = 'TC ' + '\"' + folderLocation +'\\Temp.inp\" ' + '\"macro filename {' + filelist[ii] + '.xye} #define GUI_LINES\"\n' 
+                line2 = ('TC ' + '\"' + folderLocation +'\\Temp.inp\" ' + 
+                    '\"macro filename {' + filelist[ii] + '} #define GUI_LINES\"\n' )
             line5 = 'copy Temp.out ' + filelist[ii] + fileTag + '.inp\n'
             line7 = 'python updateDataFile.py ' + filelist[ii] + ' ' + fileTag + '\n'
             refinementBlock = [commentLine,line1,line2,line3,line4,line5,line6,line7]
             if ii==0:
-                refinementBlock.append('timeout /t 60\n')
+                refinementBlock.append('timeout /t 120\n')
             for ii in range(len(refinementBlock)):
                 batchFile.write(refinementBlock[ii])
         if 'nextBatch' in optionals:
