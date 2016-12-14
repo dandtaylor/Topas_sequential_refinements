@@ -8,7 +8,7 @@ updateDataFile.py is needed for performing sequential refinements
 """
 
 import matplotlib.pyplot as plt
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 import os
 
@@ -68,9 +68,9 @@ def plotAllPrms(filename,pltTitle):
     
     x = 0
     prmPlottedlist = []
+    print('\nHere are the refined parameters:')
     for prm in range(1,len(prmslist)-1):
         prmData = []
-        
         if prmslist[prm] != 'error':
             ### print each of the parameters that are to be plotted ###
             print(prmslist[prm])
@@ -103,6 +103,8 @@ def plotAllPrms(filename,pltTitle):
                 
                 
     ##########format the figure##########
+    for ii in range(x,len(axs)):
+        fig.delaxes(axs[ii])
     plt.show()
     ### make the figure dimensions depend on the plot dimensions ###
     if plotSize <=4:
@@ -114,8 +116,8 @@ def plotAllPrms(filename,pltTitle):
     else:
         fig.set_size_inches(16, 16)
     fig.set_size_inches(16, 8.5)
-    matplotlib.rcParams['pdf.fonttype']=42
-    matplotlib.rcParams.update({'font.size': 9})
+    mpl.rcParams['pdf.fonttype']=42
+    mpl.rcParams.update({'font.size': 9})
     #plt.tight_layout()
     plt.suptitle(pltTitle, fontsize=12, y=1)
     savedFileName = "RefinementResults_" + filename.split('.')[0]
@@ -322,8 +324,69 @@ def plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName)
     plt.ylim(ymin,ymax)
     
     plt.title(PlotLabel)
-    matplotlib.rcParams['pdf.fonttype']=42
-    matplotlib.rcParams.update({'font.size': 9})
+    mpl.rcParams['pdf.fonttype']=42
+    mpl.rcParams.update({'font.size': 9})
     plt.savefig(savedFileName + ".png", format = 'png', dpi= 600)
     plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
 
+def plotRefinement(filename,refinementType,Xlim='',saveSuffix=''):
+    """ 
+    plotRefinement(filename,refinementType)
+    create a plot of the refinment results for a given pattern\n
+    the data to be plotted must be in files with names like this:
+        filename+'_'+refinementType+'_plot.txt'
+        filename+'_'+refinementType+'_tics.txt'\n
+    example call: plotRefinement('La080Sr020FeO3_600_ramp-00060','lebail',
+        Xlim=[18,25.5],saveSuffix='zoomed')
+    """
+
+    x,yobs,calc,diff = np.loadtxt(filename+'_'+refinementType+'_plot.txt',unpack=True,usecols=[0,1,2,3])
+    tics = np.loadtxt(filename+'_'+refinementType+'_tics.txt',skiprows=0,unpack=False,usecols=[0])
+    
+    fig,ax = plt.subplots(1); plt.show()
+    plt.scatter(x,yobs,s=5, facecolors ='k')
+    plt.plot(x,calc,'r')
+    plottingDiff = diff-max(diff)*2
+    plt.plot(x,plottingDiff,'b')
+    ytic = np.ones(len(tics))-max(diff)*0.5
+    plt.scatter(tics,ytic,marker='|',s=25)
+    
+    # use the area to be plotted's Y data to determine the y-axis limits
+    if Xlim:
+        ax.set_xlim(Xlim)
+        Xindex = np.where(x>=Xlim[0])[0][0]
+        Ymax = max(yobs[Xindex:])*1.2
+    else:
+        Ymax = max(yobs)*1.1
+    Ymin = min(plottingDiff)*1.1
+    ax.set_ylim([Ymin,Ymax])
+    ax.get_yaxis().set_ticks([])
+    ax.set_xlabel('2$\\theta$ ($^\circ$); $\lambda$ = 0.45336 $\AA$')
+    ax.set_ylabel('intensity (counts)')
+    
+    fig.set_size_inches(4, 4)
+    mpl.rcParams['pdf.fonttype']=42
+    mpl.rcParams.update({'font.size': 9})
+    #plt.tight_layout()
+    plt.suptitle(filename +'_'+ refinementType, fontsize=12)
+    savedFileName = "RefinementPlot_" + filename +'_'+ refinementType + saveSuffix
+    plt.savefig(savedFileName + ".png", format = 'png', dpi= 600)
+    plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
+
+
+def plotRefinementTypical(patterns,refinementType):
+    """
+    plotRefinementTypical(patterns,refinementType)
+    This function will save two plots for each pattern given:
+    1- 5 to 25.5 2theta
+    2- 18 to 25.5 2theta\n
+    example parameters:
+        patterns = ['La080Sr020FeO3_600_ramp-00060',
+            'La080Sr020FeO3_600_red-00029','La080Sr020FeO3_600_ox-00009']
+        refinementType = 'lebail'
+    """
+    print('\nThese are the patterns to be plotted:\n')
+    for pattern in patterns:
+        print(pattern + ' ' + refinementType)
+        plotRefinement(pattern,refinementType,Xlim=[5,25.5])
+        plotRefinement(pattern,refinementType,Xlim=[18,25.5],saveSuffix='zoomed')
