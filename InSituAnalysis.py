@@ -36,7 +36,7 @@ def plotAllPrms(filename,pltTitle):
     plotAllPrms(filename,pltTitle)\n
     This function will go into the results.txt file in the current folder and 
     plot all refined parameters\n 
-    I need to add code to delete unused axes
+    
     """
     plt.close('all')
     ### import data from results.txt ###
@@ -53,6 +53,8 @@ def plotAllPrms(filename,pltTitle):
     ###make plot whose size dimensions depend on the number of prms, 16 is the max###
     if plotSize <=4:
         fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True)
+    elif plotSize <= 6:
+        fig, axs = plt.subplots(nrows=2, ncols=3, sharex=True)
     elif plotSize <= 9:
         fig, axs = plt.subplots(nrows=3, ncols=3, sharex=True)
     elif plotSize <= 12:
@@ -109,6 +111,8 @@ def plotAllPrms(filename,pltTitle):
     ### make the figure dimensions depend on the plot dimensions ###
     if plotSize <=4:
         fig.set_size_inches(6, 6)
+    elif plotSize <= 6:
+        fig.set_size_inches(6, 9)
     elif plotSize <= 9:
         fig.set_size_inches(9, 9)
     elif plotSize <= 12:
@@ -125,11 +129,13 @@ def plotAllPrms(filename,pltTitle):
     plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
 
    
-def importResults(filename,prmResult):
+def importResults(filename,prmResult,error=False):
     """
-    importResults(filename,prmResult)\n
+    importResults(filename,prmResult,error=False)\n
     import and return the topas sequential refinement results from the results.txt file
     returns numpy array with floats
+    if error=True, errorbars (assumed to be in a column to the right of the prm)
+    are imported as an additional array
     """
     with open(filename) as f:
         data = f.readlines()
@@ -139,7 +145,14 @@ def importResults(filename,prmResult):
     for ii in range(1,len(data)):
         prmData.append(data[ii].split()[prmIndex])
     prmData = np.array(prmData).astype(float)
-    return prmData
+    if error:
+        prmDataError = []
+        for ii in range(1,len(data)):
+            prmDataError.append(data[ii].split()[prmIndex+1])
+        prmDataError = np.array(prmDataError).astype(float)
+        return prmData, prmDataError
+    else:
+        return prmData
 
 def importResultsError(filename,prmResult):
     """
@@ -192,7 +205,16 @@ def importMetadata(filelist,prm):
                 templist.append(lines[xx].split('=')[1].split(':')[0])
     return templist
     
-
+def importMetadataList(filelist,prm_names):
+    """ 
+    when given a list of metadata prms, this will return a 2D list of metadata 
+    """
+    metadata = []
+    for prm in prm_names:
+        temp = importMetadata(filelist,prm)
+        metadata.append(temp)
+    return metadata
+    
 def createBatchFile(filelist,batchFileName,**optionals):
     """
     createBatchFile(filelist,batchFileName,**optionals)\n
@@ -255,7 +277,7 @@ def createBatchFile(filelist,batchFileName,**optionals):
             for ii in range(len(refinementBlock)):
                 batchFile.write(refinementBlock[ii])
         if 'nextBatch' in optionals:
-            batchFile.write('timeout /t 60\n')
+            batchFile.write('timeout /t 180\n')
             batchFile.write(optionals['nextBatch'])
         else:
             batchFile.write('timeout /t 180\n')
@@ -289,13 +311,17 @@ def makeFileList(filepre,filemid,filenums):
 
 
 
-def plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName):
+def plotVolATM(Xprm,Yprm,Yerror,atm,YLabel,PlotLabel,startingScan=0,savedFileName=''):
     """
     plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName)\n
     This function will plot 2 prms (vol and time) against each other while using
     the atm data to determine the color and shape of the data point
     This makes it clear what atmosphere each pattern was collected under
     """
+    
+    Xprm = np.array(Xprm) # normalize x-axis to startingScanIndex
+    Xprm = Xprm-Xprm[startingScan]
+
     for ii in range(len(Yprm)):
         if atm[ii] == 'GO5':
             "air"
@@ -319,15 +345,16 @@ def plotVolATM(Xprm,Yprm,Yerror,atm,startingScan,YLabel,PlotLabel,savedFileName)
     plt.xlabel('time (sec)')
     plt.xlim(0,1000)
     plt.ylabel(YLabel)
-    ymin = Yprm[startingScan]-Yprm[startingScan]*0.0007 # 0.7% below the minimum value
+    ymin = Yprm[startingScan]-Yprm[startingScan]*0.0007 # 0.7% below the initial value
     ymax = max(Yprm) + max(Yprm) * 0.0007 # 0.7% above the max value
     plt.ylim(ymin,ymax)
     
     plt.title(PlotLabel)
     mpl.rcParams['pdf.fonttype']=42
     mpl.rcParams.update({'font.size': 9})
-    plt.savefig(savedFileName + ".png", format = 'png', dpi= 600)
-    plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
+    if savedFileName:
+        plt.savefig(savedFileName + ".png", format = 'png', dpi= 600)
+        plt.savefig(savedFileName + ".pdf", format = 'pdf', dpi= 600)
 
 def plotRefinement(filename,refinementType,Xlim='',saveSuffix=''):
     """ 
@@ -390,3 +417,31 @@ def plotRefinementTypical(patterns,refinementType):
         print(pattern + ' ' + refinementType)
         plotRefinement(pattern,refinementType,Xlim=[5,25.5])
         plotRefinement(pattern,refinementType,Xlim=[18,25.5],saveSuffix='zoomed')
+
+def refinedPrmsIndex(resultsFile,parameter=''):
+    """
+    \nrefinedPrmsIndex(resultsFile,parameter='')\n
+    Returns tuple of parameter's index and list of options
+    if no parameter is given, this f'n will provide a list of all refined
+    parameters from the results file then ask for the user to select the desired one
+    
+    """
+    with open(resultsFile) as f:
+        data = f.readlines()
+    ### make a list of the parameters in the header ###
+    prmslist = data[0].split()
+    x = 0
+    prmPlottedlist = []
+    print('\nHere are the refined parameters:')
+    for prm in range(1,len(prmslist)-1):
+        if prmslist[prm] != 'error':
+            ### print each of the parameters ###
+            print(prmslist[prm])
+            prmPlottedlist.append(prmslist[prm])                    
+            x += 1
+        ### ask the user which parameter is desired ###
+    if parameter:
+        prmIndex = data[0].split().index(str(parameter))
+    else:
+        prmIndex = data[0].split().index(str(raw_input("which parameter is to be plotted?: ")))
+    return prmIndex,prmPlottedlist
