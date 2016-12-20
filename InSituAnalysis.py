@@ -225,6 +225,9 @@ def createBatchFile(filelist,batchFileName,**optionals):
     use 'fileTag' keyword to define an additiona string to be included in the 
     .inp files created during the refinement
     use 'nextBatch' keyword to launch another file after the this one finishes
+    use 'starting' keyword to specify the starting .inp file for the refinement
+    use 'results' keyword to specify the 'results.txt' file to be deleted at 
+    beginning of batch file
     
     """
     topasLocation = 'C:\\TOPAS5\\'
@@ -235,6 +238,14 @@ def createBatchFile(filelist,batchFileName,**optionals):
         fileTag = optionals['fileTag']
     else:
         fileTag = ''
+    if 'starting' in optionals:
+        starting = optionals['starting']
+    else:
+        starting = 'starting'
+    if 'results' in optionals:
+        results = optionals['results']
+    else:
+        results = 'results'
                
     ##### be sure to 'escape' any backslash '\' characters with an additional '\'
 
@@ -244,9 +255,9 @@ def createBatchFile(filelist,batchFileName,**optionals):
         ############## header lines #######################
         commentLine = 'REM ---------------\n'
         del1 = 'del ' + '\"' + folderLocation +'\\Temp.inp\"\n'
-        del2 = ('del ' + '\"' + folderLocation +'\\results' + fileTag +
+        del2 = ('del ' + '\"' + folderLocation +'\\' + results +
             '.txt\"\n') 
-        copy1 = ('copy ' + '\"' + folderLocation + '\\starting' + fileTag +
+        copy1 = ('copy ' + '\"' + folderLocation + '\\' + starting +
             '.inp\" ' + '\"' +folderLocation + '\\Temp.inp\"\n') ### update starting.inp
         headerList = [commentLine,del1,del2,copy1,commentLine]
         for ii in range(len(headerList)):
