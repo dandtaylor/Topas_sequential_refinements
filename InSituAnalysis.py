@@ -191,18 +191,21 @@ def importMetadata(filelist,prm):
     for ii in range(len(filelistTemp)):
         with open(filelistTemp[ii]) as f:
             lines = f.readlines()
-            xx=0
-            while lines[xx] != 'nPhases=1\n':
+        xx=0
+        if prm == 'time':
+            while 'timeStamp' not in lines[xx]:
                 xx += 1
-            if prm == 'time':
-                xx += 3
-                templist.append(float(lines[xx].split('=')[1]))
-            elif prm == 'temp':
-                xx += 11
-                templist.append(float(lines[xx].split('=')[1]))
-            elif prm == 'atm':
-                xx += 8
-                templist.append(lines[xx].split('=')[1].split(':')[0])
+            templist.append(float(lines[xx].split('=')[1]))
+        elif prm == 'atm':
+            while 'userComment1' not in lines[xx]:
+                xx += 1
+            templist.append(lines[xx].split('=')[1].split(':')[0])
+        elif prm == 'temp':
+            while 'userComment4' not in lines [xx]:
+                xx +=1
+            templist.append(float(lines[xx].split('=')[1]))
+        else:
+            print("I don't know how to find that parameter")
     return templist
     
 def importMetadataList(filelist,prm_names):
