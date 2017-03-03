@@ -586,7 +586,8 @@ def contour_basic(sample_list, save='', xlimit='', white=False, contour_levels=1
         Z.append(z)
     Z = np.array(Z).astype(float)
     Zmax = Z.max()
-    levels = range(0, int(Zmax), int(Zmax //contour_levels))
+    levels = np.array(range(0, int(Zmax), int(Zmax //contour_levels)))
+    levels = levels // 100 * 100
     fig, ax = plt.subplots(1, figsize=figuresize)
     CS = ax.contourf(x, time, Z,cmap='jet', levels = levels)
     levels2 = levels[:2]
